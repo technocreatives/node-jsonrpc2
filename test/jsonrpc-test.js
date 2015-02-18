@@ -174,6 +174,20 @@ module.exports = {
       expect(decoded.result).to.equal('Hello, World!');
     },
 
+    'Simple synchronous echo with string as id': function (){
+      var testJSON = '{ "method": "echo", "params": ["Hello, World!"], "id": "test" }';
+      var req = new MockRequest('POST');
+      var res = new MockResponse();
+      server.handleHttp(req, res);
+      req.emit('data', testJSON);
+      req.emit('end');
+      expect(res.httpCode).to.equal(200);
+      var decoded = JSON.parse(res.httpBody);
+      expect(decoded.id).to.equal('test');
+      expect(decoded.error).to.equal(undefined);
+      expect(decoded.result).to.equal('Hello, World!');
+    },
+
     'Using promise': function (){
       // Expose a function that just returns a promise that we can control.
       var callbackRef = null;
