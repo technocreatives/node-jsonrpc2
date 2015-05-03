@@ -212,7 +212,7 @@ module.exports = function (classes) {
 
               response = {
                 'jsonrpc': '2.0',
-                'result': typeof(result) === 'undefined' ? null : result;
+                'result': typeof(result) === 'undefined' ? null : result
               };
             }
 
