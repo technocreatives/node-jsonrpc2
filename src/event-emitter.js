@@ -13,12 +13,17 @@ module.exports = function (classes){
       return msg;
     },
     /**
-     * Check if current request has an integer id
+     * Check if current request has an id adn it is of type integer (non fractional) or string.
+     *
      * @param {Object} request
      * @return {Boolean}
      */
-    hasId : function (request){
-      return request && typeof request['id'] !== 'undefined' && /^\-?\d+$/.test(request['id']);
+    hasId : function (request) {
+      return request && typeof request['id'] !== 'undefined' &&
+      (
+        (typeof(request['id']) === 'number' && /^\-?\d+$/.test(request['id'])) ||
+        (typeof(request['id']) === 'string') || (request['id'] === null)
+      );
     }
   }).$inherit(require('eventemitter3').EventEmitter, []);
 
