@@ -20,6 +20,11 @@ To install node-jsonrpc2 in the current directory, run:
 npm install json-rpc2 --save
 ```
 
+## Changes from 0.x
+
+Before, the `id` member was permissive and wouldn't actually adhere to the RFC, allowing anything besides `undefined`.
+If your application relied on weird id constructs other than `String`, `Number` or `null`, it might break if you update to 1.x
+
 ## Usage
 
 Firing up an efficient JSON-RPC server becomes extremely simple:
