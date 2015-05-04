@@ -20,8 +20,10 @@ module.exports = function (classes){
      */
     hasId : function (request) {
       return request && typeof request['id'] !== 'undefined' &&
-      (typeof(request['id']) === 'number' && /^\-?\d+$/.test(request['id']) ||
-       typeof(request['id']) === 'string' || request['id'] === null);
+      (
+        (typeof(request['id']) === 'number' && /^\-?\d+$/.test(request['id'])) ||
+        (typeof(request['id']) === 'string') || (request['id'] === null)
+      );
     }
   }).$inherit(require('eventemitter3').EventEmitter, []);
 
