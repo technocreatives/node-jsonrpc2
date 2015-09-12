@@ -4,7 +4,7 @@ module.exports = function (classes) {
   var
     net = require('net'),
     http = require('http'),
-    extend = require('util')._extend,
+    extend = require('object-assign'),
     JsonParser = require('jsonparse'),
 
     UNAUTHORIZED = 'Unauthorized',
@@ -123,7 +123,7 @@ module.exports = function (classes) {
             'Content-Length': 0,
             'Access-Control-Allow-Headers': 'Accept, Authorization, Content-Type'
           };
-          headers = extend(self.opts.headers, headers);
+          headers = extend({}, headers, self.opts.headers);
           res.writeHead(200, headers);
           res.end();
           return;
@@ -173,7 +173,7 @@ module.exports = function (classes) {
               headers['Content-Length'] = 0;
             }
 
-            headers = extend(self.opts.headers, headers);
+            headers = extend({}, headers, self.opts.headers);
 
             if (!conn.isStreaming) {
               res.writeHead(200, headers);
@@ -377,10 +377,12 @@ module.exports = function (classes) {
           'id': null
         });
         custom_headers = custom_headers || {};
-        var headers = extend(custom_headers, {'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(message),
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Allow': 'POST'});
+        var headers = extend({
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(message),
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Allow': 'POST'
+        }, custom_headers);
 
         /*if (code === 401) {
          headers['WWW-Authenticate'] = 'Basic realm=' + 'JSON-RPC' + '';
