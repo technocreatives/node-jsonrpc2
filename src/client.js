@@ -14,19 +14,19 @@ module.exports = function (classes){
     WebSocketConnection = classes.WebSocketConnection,
 
     // Authorization Type Constants
+    // other types to be added
     Authorization = {
-      NONE: 'none'
+      NONE: 'none',
       BASIC: 'basic',
       COOKIE: 'cookie',
       JWT: 'jwt'
-      // other types to be added
     },
 
     /**
      * JSON-RPC Client.
      */
       Client = Endpoint.$define('Client', {
-      construct    : function (super, port, host, user, password){
+      construct    : function ($super, port, host, user, password){
         $super();
 
         // Set Host, Port, Username and Password (if available)
