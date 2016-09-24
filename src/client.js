@@ -12,22 +12,114 @@ module.exports = function (classes){
     _ = classes._,
     SocketConnection = classes.SocketConnection,
     WebSocketConnection = classes.WebSocketConnection,
+
+    // Authorization Type Constants
+    Authorization = {
+      NONE: 'none'
+      BASIC: 'basic',
+      COOKIE: 'cookie',
+      JWT: 'jwt'
+      // other types to be added
+    },
+
     /**
      * JSON-RPC Client.
      */
       Client = Endpoint.$define('Client', {
-      construct    : function ($super, port, host, user, password){
+      construct    : function (super, port, host, user, password){
         $super();
 
+        // Set Host, Port, Username and Password (if available)
         this.port = port;
         this.host = host;
         this.user = user;
         this.password = password;
-      },
-      _authHeader: function(headers){
+
+        // Initialize Authorization Variables
+        this.authType = Authorization.NONE;
+        this.jwtToken = null;
+        this.cookie = null;
         if (this.user && this.password) {
-          var buff = new Buffer(this.user + ':' + this.password).toString('base64');
-          headers['Authorization'] = 'Basic ' + buff;
+          this.authType = Authorization.BASIC;
+        }
+      },
+      _authHeader: function(headers) {
+        switch (this.authType) {
+          case Authorization.BASIC: 
+            if (this.user && this.password) {
+              var buff = new Buffer(this.user + ':' + this.password).toString('base64');
+              headers['Authorization'] = 'Basic ' + buff;
+            }
+          break;
+          case Authorization.COOKIE:
+            if (this.cookie) {
+              headers['Cookie'] = this.cookie; 
+            }
+          break;
+          case Authorization.JWT: 
+            if (this.jwtToken) {
+              headers['Authorization'] = 'Bearer ' + this.jwtToken;
+            }
+          break;
+          default: 
+            // Clear Authorization Variables and Headers
+            this.jwtToken = null;
+            this.cookie = null;
+            delete headers['Authorization'];
+            delete headers['Cookie'];
+          break;
+        }
+        
+      },
+      /**
+       * Set Authorization Type
+       *
+       * If you provided credentials for at least two of the authorization 
+       * methods (basic and jwt or cookie) and you want to later switch to
+       * either one (reuse the same client). 
+       *
+       * Use this function before connecting to a server.
+       */
+      setAuthType: function(type) {
+        if (type && (type.toLowerCase() in _.values(Authorization))) {
+          this.authType = type;
+        }
+      },
+      /**
+       * Set Basic Authorization for Requests
+       *
+       * Sets the Auth Type to Basic and sets the username and password.
+       * Must be used before connecting to server. 
+       */
+      basicAuth: function(username, password) {
+        if (username && password) {
+          this.authType = Authorization.BASIC;
+          this.username = username;
+          this.password = password;
+        }
+      },
+      /**
+       * Sets Cookie Authorization for Requests
+       *
+       * Sets the Auth Type to Cookie and sets the cookie header value.
+       * Must be used before connecting to a server.
+       */
+      cookieAuth: function(value) { 
+        if (value && false === _.isFunction(value)) {
+          this.authType = Authorization.COOKIE;
+          this.cookie = value;
+        }
+      },
+      /** 
+       * Set JWT Bearer Authorization for Requests
+       * 
+       * Set the Auth Type to JWT and sets the JWT token.
+       * Must be used before connecting to a server.
+       */
+      jwtAuth: function(token) {
+        if (token && false === _.isFunction(token)) {
+          this.authType = Authorization.JWT;
+          this.jwtToken = token;
         }
       },
       /**
