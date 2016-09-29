@@ -45,22 +45,26 @@ module.exports = function (classes){
       },
       _authHeader: function(headers) {
         switch (this.authType) {
+
           case Authorization.BASIC: 
             if (this.user && this.password) {
               var buff = new Buffer(this.user + ':' + this.password).toString('base64');
               headers['Authorization'] = 'Basic ' + buff;
             }
           break;
+
           case Authorization.COOKIE:
             if (this.cookie) {
               headers['Cookie'] = this.cookie; 
             }
           break;
+
           case Authorization.JWT: 
             if (this.jwtToken) {
               headers['Authorization'] = 'Bearer ' + this.jwtToken;
             }
           break;
+
           default: 
             // Clear Authorization Variables and Headers
             this.jwtToken = null;
