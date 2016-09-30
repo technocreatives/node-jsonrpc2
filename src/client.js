@@ -43,10 +43,10 @@ module.exports = function (classes){
           this.authType = Authorization.BASIC;
         }
       },
-      _authHeader: function(headers) {
+      _authHeader  : function(headers) {
         switch (this.authType) {
 
-          case Authorization.BASIC: 
+          case Authorization.BASIC:
             if (this.user && this.password) {
               var buff = new Buffer(this.user + ':' + this.password).toString('base64');
               headers['Authorization'] = 'Basic ' + buff;
@@ -55,7 +55,7 @@ module.exports = function (classes){
 
           case Authorization.COOKIE:
             if (this.cookie) {
-              headers['Cookie'] = this.cookie; 
+              headers['Cookie'] = this.cookie;
             }
           break;
 
@@ -84,8 +84,9 @@ module.exports = function (classes){
        *
        * Use this function before connecting to a server.
        */
-      setAuthType: function(type) {
-        if (type && (type.toLowerCase() in _.values(Authorization))) {
+      setAuthType  : function(type) {
+        type = type.toLowerCase();
+        if (type && (_.values(Authorization).indexOf(type) > -1)) {
           this.authType = type;
         }
       },
@@ -95,10 +96,10 @@ module.exports = function (classes){
        * Sets the Auth Type to Basic and sets the username and password.
        * Must be used before connecting to server. 
        */
-      basicAuth: function(username, password) {
+      basicAuth    : function(username, password) {
         if (username && password) {
           this.authType = Authorization.BASIC;
-          this.username = username;
+          this.user = username;
           this.password = password;
         }
       },
@@ -107,8 +108,12 @@ module.exports = function (classes){
        *
        * Sets the Auth Type to Cookie and sets the cookie header value.
        * Must be used before connecting to a server.
+       *
+       * Server should have a login method (with username and password) which
+       * returns a Set-Cookie Header, and its value has to be copied to the
+       * subsequent requests to the server. (Or set manually by this method)
        */
-      cookieAuth: function(value) { 
+      cookieAuth    : function(value) {
         if (value && false === _.isFunction(value)) {
           this.authType = Authorization.COOKIE;
           this.cookie = value;
@@ -120,7 +125,7 @@ module.exports = function (classes){
        * Set the Auth Type to JWT and sets the JWT token.
        * Must be used before connecting to a server.
        */
-      jwtAuth: function(token) {
+      jwtAuth       : function(token) {
         if (token && false === _.isFunction(token)) {
           this.authType = Authorization.JWT;
           this.jwtToken = token;
@@ -132,7 +137,7 @@ module.exports = function (classes){
        * In HTTP mode, we get to submit exactly one message and receive up to n
        * messages.
        */
-      connectHttp  : function (method, params, opts, callback){
+      connectHttp   : function (method, params, opts, callback){
         if (_.isFunction(opts)) {
           callback = opts;
           opts = {};

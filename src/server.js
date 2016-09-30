@@ -35,6 +35,8 @@ module.exports = function (classes) {
         this.opts.type = typeof this.opts.type !== 'undefined' ? this.opts.type : 'http';
         this.opts.headers = this.opts.headers || {};
         this.opts.websocket = typeof this.opts.websocket !== 'undefined' ? this.opts.websocket : true;
+
+        // Authorization
         this.authType = Authorization.NONE;
         this.authHandler = null;
         this.basicHandler = null;
@@ -448,6 +450,7 @@ module.exports = function (classes) {
        *     return true;
        *   }
        *
+       *
        */
       enableCookieAuth: function (handler) {
         if (_.isFunction(handler)) {
@@ -481,7 +484,8 @@ module.exports = function (classes) {
        * before switching/setting to another Auth Type.
        */
       setAuthType: function (type) {
-        if (type && (type.toLowerCase() in _.values(Authorization))) {
+        type = type.toLowerCase();
+        if (type && (_.values(Authorization).indexOf(type) > -1)) {
           this.authType = type;
           switch (this.authType) {
             case Authorization.BASIC:
