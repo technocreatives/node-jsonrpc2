@@ -6,7 +6,7 @@ var
   server, MockRequest, MockResponse, testBadRequest, TestModule, echo;
 
 module.exports = {
-  jsonRpcTest: {
+  'jsonRpcTest': {
     beforeEach: function () {
       server = rpc.Server.$create();
 
