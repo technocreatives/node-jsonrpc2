@@ -155,7 +155,7 @@ server = null;
 client = null;
 ```
 
-Cookie Authorization Communication
+Bearer(JWT) Authorization Communication
 
 ```js
 var rpc = require('json-rpc2');
