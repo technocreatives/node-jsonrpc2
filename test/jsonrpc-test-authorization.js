@@ -20,6 +20,10 @@ module.exports = {
           callback(null, args[0]);
         });
 
+        server.expose('throw_error', function (args, opts, callback) {
+          throw new Errors.InternalError();
+        });
+
         serverHandle = server.listen(8088, 'localhost');
         // Deprecated Authorization
         server.enableAuth('user', 'pass');
@@ -31,7 +35,20 @@ module.exports = {
         server = null;
         client = null;
       },
+      
+      'check throw error - should return 200 OK': function (done) {
+        // Client
+        client = rpc.Client.$create(8088, 'localhost', 'user', 'pass');
+        var message = ['Hello, Authorization!'];
 
+        client.call('throw_error', message, function (err, result) {
+          expect(err.code).to.equal((new Errors.InternalError()).code);
+          expect(err.message).to.be.string('InternalError');
+
+          done();
+        });
+      },
+      
       'client constructor - should return 200 OK': function (done) {
         // Client
         client = rpc.Client.$create(8088, 'localhost', 'user', 'pass');
@@ -61,7 +78,7 @@ module.exports = {
           done();
         });
       },
-
+      
       'client basicAuth function - should return 200 OK': function (done) {
         // Client
         client = rpc.Client.$create(8088, 'localhost');
@@ -633,7 +650,7 @@ module.exports = {
             done();
           });
         });
-      }
+      }      
     }
   }
 };

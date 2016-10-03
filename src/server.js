@@ -6,6 +6,7 @@ module.exports = function (classes) {
     http = require('http'),
     extend = require('object-assign'),
     JsonParser = require('jsonparse'),
+    Promise = require('bluebird'),
 
     // Authorization Type Constants
     // other types to be added
@@ -75,9 +76,8 @@ module.exports = function (classes) {
 
         return value;
       },
-      _checkAuth: function (req, res) {
-        var self = this,
-            authResult = true;
+      _checkAuth: function (req) {
+        var self = this;
 
         if (self.authHandler) {
           var
@@ -92,27 +92,29 @@ module.exports = function (classes) {
                   username = parts[0],
                   password = parts[1];
 
-              if (false === this.authHandler(username, password)) {
-                authResult = false;
-              }
-              break;
+              return Promise.try(function () {
+                return self.authHandler(username, password);  
+              });
 
             case Authorization.COOKIE:
             case Authorization.JWT:
-              if (false === this.authHandler(authToken)) {
-                authResult = false;
-              }
-            break;
-          }
+              return Promise.try(function () { 
+                return self.authHandler(authToken);
+              });
 
-          if (false === authResult && res) {
-            classes.EventEmitter.trace('<--', 'Unauthorized request');
-            Server.handleHttpError(req, res, new Error.InvalidParams(UNAUTHORIZED), self.opts.headers);
-            return false;
           }
+        } else {
+        
+          // Handle case for non auth server
+          return new Promise(function (resolve) {
+            resolve(true);
+          });
         }
-
-        return authResult;
+      },
+      _handleUnauthorized: function (req, res) {
+        var self = this;
+        classes.EventEmitter.trace('<--', 'Unauthorized request');
+        Server.handleHttpError(req, res, new Error.InvalidParams(UNAUTHORIZED), self.opts.headers);      
       },
       /**
        * Start listening to incoming connections.
@@ -135,9 +137,19 @@ module.exports = function (classes) {
         if (this.opts.websocket === true) {
           server.on('upgrade', function onUpgrade(req, socket, body) {
             if (WebSocket.isWebSocket(req)) {
-              if (self._checkAuth(req, socket)) {
-                self.handleWebsocket(req, socket, body);
-              }
+              self._checkAuth(req, socket).then(function (result) {
+                if (result) {
+                  console.log('passed auth');
+                  self.handleWebsocket(req, socket, body);
+                } else {
+                  self._handleUnauthorized(req, socket);
+                }
+              }).catch(function (err) { 
+                // should be some other error, it was thrown while
+                // trying to make the authorization or to
+                // handle the websocket
+                self._handleUnauthorized(req, socket);
+              })
             }
           });
         }
@@ -182,7 +194,6 @@ module.exports = function (classes) {
       handleHttp: function (req, res) {
         var buffer = '', self = this;
         var headers;
-
         if (req.method === 'OPTIONS') {
           headers = {
             'Content-Length': 0,
@@ -194,18 +205,14 @@ module.exports = function (classes) {
           return;
         }
 
-        if (!self._checkAuth(req, res)) {
-          return;
-        }
-
-        Endpoint.trace('<--', 'Accepted http request');
-
         if (req.method !== 'POST') {
           Server.handleHttpError(req, res, new Error.InvalidRequest(METHOD_NOT_ALLOWED), self.opts.headers);
           return;
         }
+        
 
         var handle = function handle(buf) {
+          console.log('handling rpc')
           // Check if json is valid JSON document
           var decoded;
 
@@ -253,6 +260,7 @@ module.exports = function (classes) {
 
           var callback = function callback(err, result) {
             var response;
+            console.log('called the callback ');
             if (err) {
 
               self.emit('error', err);
@@ -265,7 +273,7 @@ module.exports = function (classes) {
               if (!(err instanceof Error.AbstractError)) {
                 err = new Error.InternalError(err.toString());
               }
-
+              console.log('throw error');
               response = {
                 'jsonrpc': '2.0',
                 'error': {code: err.code, message: err.message }
@@ -295,12 +303,27 @@ module.exports = function (classes) {
           self.handleCall(decoded, conn, callback);
         }; // function handle(buf)
 
-        req.on('data', function requestData(chunk) {
-          buffer = buffer + chunk;
-        });
+        self._checkAuth(req, res).then(function (result) {
+          if (result) {  // successful authorization
+            Endpoint.trace('<--', 'Accepted http request');
+            console.log('setting req handlers.');
+            req.on('data', function requestData(chunk) {
+              console.log('on data'); 
+              buffer = buffer + chunk;
+            });
 
-        req.on('end', function requestEnd() {
-          handle(buffer);
+            req.on('end', function requestEnd() {
+              console.log('request end, handling');
+              handle(buffer);
+            });
+            
+          } else {
+            self._handleUnauthorized(req, res);
+            return;
+          }
+        }).catch(function (err) {
+          console.log('error ' + err);
+          return self._handleUnauthorized(req, res);
         });
       },
 

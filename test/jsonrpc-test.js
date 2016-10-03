@@ -23,7 +23,7 @@ module.exports = {
       };
       server.expose('echo', echo);
 
-      var throw_error = function () {
+      var throw_error = function (args, opts, callback) {
         throw new rpc.Error.InternalError();
       };
       server.expose('throw_error', throw_error);
@@ -133,7 +133,7 @@ module.exports = {
         expect(decoded.error.code).to.equal(-32603);
       },
 //      text_error javascript_error
-
+      
       'Missing object attribute (method)': function (done) {
         var testJSON = '{ "params": ["Hello, World!"], "id": 1 }';
         testBadRequest(testJSON, done);
