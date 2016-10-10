@@ -16,13 +16,16 @@ module.exports = function (classes){
      * JSON-RPC Client.
      */
       Client = Endpoint.$define('Client', {
-      construct    : function ($super, port, host, user, password){
+      construct    : function ($super, config){
         $super();
 
-        this.port = port;
-        this.host = host;
-        this.user = user;
-        this.password = password;
+        this.port = config.port;
+        this.host = config.host;
+        if(config.user) {
+          this.user = config.user;
+          this.password = config.password;
+        }
+        this.netstring = config.netstring || false;
       },
       _authHeader: function(headers){
         if (this.user && this.password) {
@@ -159,6 +162,7 @@ module.exports = function (classes){
         });
 
         conn = new SocketConnection(self, socket);
+        conn.netstring = self.netstring;
         parser = new JsonParser();
 
         parser.onValue = function parseOnValue(decoded){
@@ -171,6 +175,17 @@ module.exports = function (classes){
 
         socket.on('data', function socketData(chunk){
           try {
+
+            if(self.netstring) {
+
+              var str = chunk.toString();
+              var colonIdx = str.indexOf(':');
+              var length = parseInt(str.substr(0, colonIdx));
+              var json = str.substr(colonIdx+1,length);
+              var decoded = JSON.parse(json);
+              return conn.handleMessage(decoded);
+            }
+
             parser.write(chunk);
           } catch (err) {
             EventEmitter.trace('<--', err.toString());

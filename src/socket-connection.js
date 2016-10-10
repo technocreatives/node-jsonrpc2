@@ -56,6 +56,10 @@ module.exports = function (classes){
           return;
         }
 
+        if(this.netstring) {
+          data = data.length + ':' + data + ',';
+        }
+
         this.conn.write(data);
       },
 
